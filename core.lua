@@ -90,7 +90,6 @@ function network_agent:parse_command(input)
 	  if preposition then
 		 local direct_object = input:match(verb.."%A(.*)%A"..preposition)
 		 local indirect_object = input:match(preposition.."%A(.*)")
-		 print(indirect_object)
 		 return verb, direct_object, preposition, indirect_object
 	  else
 		 local direct_object = input:match(verb.."%A(.*)")
