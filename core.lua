@@ -53,7 +53,12 @@ function network_agent:input(input)
    --if preposition then print("Preposition:::"..preposition) end
    --if indirect then print("Indirect:::"..indirect) end
    local call = loadstring("self:"..verb.."()")
-   call()
+   local result = pcall(call)
+   if not result then
+	  return "I don't understand.\n"
+   else
+	  return "Ok\n"
+   end
 end
 function network_agent:parse_command(input)
    -- put the yellow bird in the clock

@@ -51,11 +51,17 @@ int server(lua_State *L) {
 			lua_getglobal(L, "wizard"); // self
 			lua_pushlstring(L, buffer, bytes-2);
 
-			// 2 arg, 0 result
-			if (lua_pcall(L, 2, 0, 0) != 0) {
-				printf("[C:error running function `f':]\n\t%s\n", lua_tostring(L, -1));
+			// 2 arg, 1 result
+			if (lua_pcall(L, 2, 1, 0) != 0) {
+				printf("[C:error running function `input':]\n\t%s\n", lua_tostring(L, -1));
 				//error(L, "error running function `f': %s", 
 				//lua_tostring(L, -1));
+			}
+			else {
+				char *result = lua_tostring(L, -1);
+				if (!lua_isstring(L, -1))
+					printf("[C:error function `input` must return a string\n");
+				send(clientfd, result, strlen(result), 0);
 			}
 		}
 
