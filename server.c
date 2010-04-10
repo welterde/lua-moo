@@ -50,11 +50,12 @@ int server(lua_State *L) {
 			lua_gettable(L, -2);
 			lua_getglobal(L, "wizard"); // self
 			lua_pushlstring(L, buffer, bytes-2);
-			
+
 			// 2 arg, 0 result
 			if (lua_pcall(L, 2, 0, 0) != 0) {
-				error(L, "error running function `f': %s", 
-					  lua_tostring(L, -1));
+				printf("[C:error running function `f':]\n\t%s\n", lua_tostring(L, -1));
+				//error(L, "error running function `f': %s", 
+				//lua_tostring(L, -1));
 			}
 		}
 
