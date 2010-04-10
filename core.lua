@@ -52,7 +52,8 @@ function network_agent:input(input)
    --if direct then print("Direct:::"..direct) end
    --if preposition then print("Preposition:::"..preposition) end
    --if indirect then print("Indirect:::"..indirect) end
-   local call = loadstring("self."..verb)   
+   local call = loadstring("self:"..verb.."()")
+   call()
 end
 function network_agent:parse_command(input)
    -- put the yellow bird in the clock

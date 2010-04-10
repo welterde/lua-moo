@@ -42,7 +42,7 @@ int server(lua_State *L) {
 
 		while ((bytes = recv(clientfd, buffer, 1024, 0)) > 0) {
 			buffer[bytes - 2] = 0;
-			printf("[C:server]::%s", buffer);
+			printf("[C:server]::%s\n", buffer);
 
 			// Pass the input off to Lua
 			lua_getglobal(L, "wizard");
