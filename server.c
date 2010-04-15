@@ -35,39 +35,43 @@ int server(lua_State *L) {
 
 	while (1) {
 		size_t bytes = 0;
+		int pid;
 		addr_size = sizeof their_addr;
 		clientfd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size);
 
 		printf("[C:New connection]\n");
 
-		while ((bytes = recv(clientfd, buffer, 1024, 0)) > 0) {
-			buffer[bytes - 2] = 0;
-			printf("[C:server]::%s\n", buffer);
+		pid = fork();
 
-			// Pass the input off to Lua
-			lua_getglobal(L, "wizard");
-			lua_pushstring(L, "input");
-			lua_gettable(L, -2);
-			lua_getglobal(L, "wizard"); // self
-			lua_pushlstring(L, buffer, bytes-2);
+		if (pid == 0) {
+			// Child
+			while ((bytes = recv(clientfd, buffer, 1024, 0)) > 0) {
+				buffer[bytes - 2] = 0;
+				printf("[C:server]::%s\n", buffer);
 
-			// 2 arg, 1 result
-			if (lua_pcall(L, 2, 1, 0) != 0) {
-				printf("[C:error running function `input':]\n\t%s\n", lua_tostring(L, -1));
-				//error(L, "error running function `f': %s", 
-				//lua_tostring(L, -1));
+				// Pass the input off to Lua
+				lua_getglobal(L, "wizard");
+				lua_pushstring(L, "input");
+				lua_gettable(L, -2);
+				lua_getglobal(L, "wizard"); // self
+				lua_pushlstring(L, buffer, bytes-2);
+
+				// 2 arg, 1 result
+				if (lua_pcall(L, 2, 1, 0) != 0) {
+					printf("[C:error running function `input':]\n\t%s\n", lua_tostring(L, -1));
+					//error(L, "error running function `f': %s", 
+					//lua_tostring(L, -1));
+				}
+				else {
+					const char *result = lua_tostring(L, -1);
+					if (!lua_isstring(L, -1))
+						printf("[C:error function `input` must return a string\n");
+					send(clientfd, result, strlen(result), 0);
+				}
 			}
-			else {
-				const char *result = lua_tostring(L, -1);
-				if (!lua_isstring(L, -1))
-					printf("[C:error function `input` must return a string\n");
-				send(clientfd, result, strlen(result), 0);
-			}
+			printf("[C:Disconnect]\n");
+			close(clientfd);
 		}
-
-		printf("[C:Disconnect]\n");
-
-		close(clientfd);
 	}
 }
 
