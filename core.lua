@@ -36,11 +36,26 @@ object = clone( table, { clone = clone, isa = isa } )
 ----------------------------------------------------------------
 thing = object:clone()
 thing.description = "You see an object that needs to be described."
+function thing:look()
+   return self.description
+end
 
 container = thing:clone()
 container.contents = {}
 
 agent = container:clone()
+function agent:look()
+   return self.location.description
+end
+function agent:inventory()
+   local message = "Inventory:"
+   if next(self.contents) then
+	  for k, v in pairs(self.contents)
+   else
+	  message = "You are not carrying anything."
+   end
+   return message
+end
 network_agent = agent:clone()
 player = network_agent:clone()
 programmer = player:clone()
@@ -52,12 +67,12 @@ function network_agent:input(input)
    --if direct then print("Direct:::"..direct) end
    --if preposition then print("Preposition:::"..preposition) end
    --if indirect then print("Indirect:::"..indirect) end
-   local call = loadstring("self:"..verb.."()")
-   local result = pcall(call)
-   if not result then
-	  return "I don't understand.\n"
+   local call = self[verb]
+   result, returned = pcall(call, self)
+   if result then
+	  return (returned or "Ok") .. "\n"
    else
-	  return "Ok\n"
+	  return returned .. "\n"
    end
 end
 function network_agent:parse_command(input)
@@ -100,7 +115,9 @@ end
 
 room = container:clone()
 nowhere = room:clone()
+nowhere.description = "It's not much to look at."
 first_room = room:clone()
+first_room.description = "This is all there is here now."
 
 thing.location = nowhere
 thing.owner = wizard

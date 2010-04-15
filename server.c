@@ -58,7 +58,7 @@ int server(lua_State *L) {
 				//lua_tostring(L, -1));
 			}
 			else {
-				char *result = lua_tostring(L, -1);
+				const char *result = lua_tostring(L, -1);
 				if (!lua_isstring(L, -1))
 					printf("[C:error function `input` must return a string\n");
 				send(clientfd, result, strlen(result), 0);
