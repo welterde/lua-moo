@@ -36,15 +36,12 @@ object = clone( table, { clone = clone, isa = isa } )
 ----------------------------------------------------------------
 thing = object:clone()
 thing.description = "You see an object that needs to be described."
-function thing:look()
-   return self.description
-end
 
 container = thing:clone()
 container.contents = {}
 
 agent = container:clone()
-function agent:look(target)
+function thing:look(target)
    if target then
 	  return target.description
    else
@@ -52,7 +49,7 @@ function agent:look(target)
    end
 end
 function agent:inventory()
-   local message = "Inventory:\n"
+   local message = ""
    if next(self.contents) then
 	  for k, v in pairs(self.contents) do
 		 message = message .. "  " .. k .. "\n"
@@ -81,13 +78,13 @@ function network_agent:input(input)
 		 arg = self
 		 call = arg[verb]
 	  else
-		 arg = self.location.contents[direct]
+		 arg = (self.location.contents[direct] or self.contents[direct])
 		 call = arg[verb]
 	  end
    else
 	  call = self[verb]
    end
-   result, returned = pcall(call, self, arg)
+   local result, returned = pcall(call, self, arg)
    if result then
 	  return (returned or "Ok") .. "\n"
    else
@@ -141,3 +138,8 @@ first_room.description = "This is all there is here now."
 thing.location = nowhere
 thing.owner = wizard
 player.location = first_room
+
+apple = thing:clone()
+apple.name = "Tasty Apple"
+apple.description = "A tasty apple."
+wizard.contents = {[apple.name]=apple}
