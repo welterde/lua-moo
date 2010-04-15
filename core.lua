@@ -44,8 +44,12 @@ container = thing:clone()
 container.contents = {}
 
 agent = container:clone()
-function agent:look()
-   return self.location.description
+function agent:look(target)
+   if target then
+	  return target.description
+   else
+	  return self.location.description
+   end
 end
 function agent:inventory()
    local message = "Inventory:\n"
@@ -64,14 +68,26 @@ programmer = player:clone()
 wizard = programmer:clone()
 wizard.description = "A shadowy figure of amazing and cromulent power."
 function network_agent:input(input)
+   -- Determine what to do with the player (or bot) input
    print("[Lua:network_agent.input]:::" .. input)
    local verb, direct, preposition, indirect = self:parse_command(input)
-   --if verb then print("Verb:::"..verb) end
-   --if direct then print("Direct:::"..direct) end
-   --if preposition then print("Preposition:::"..preposition) end
-   --if indirect then print("Indirect:::"..indirect) end
-   local call = self[verb]
-   result, returned = pcall(call, self)
+   if verb then print("Verb:::"..verb) end
+   if direct then print("Direct:::"..direct) end
+   if preposition then print("Preposition:::"..preposition) end
+   if indirect then print("Indirect:::"..indirect) end
+   local arg, call
+   if direct then
+	  if direct == "self" or direct == "me" then
+		 arg = self
+		 call = arg[verb]
+	  else
+		 arg = self.location.contents[direct]
+		 call = arg[verb]
+	  end
+   else
+	  call = self[verb]
+   end
+   result, returned = pcall(call, self, arg)
    if result then
 	  return (returned or "Ok") .. "\n"
    else
