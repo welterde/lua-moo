@@ -48,9 +48,11 @@ function agent:look()
    return self.location.description
 end
 function agent:inventory()
-   local message = "Inventory:"
+   local message = "Inventory:\n"
    if next(self.contents) then
-	  for k, v in pairs(self.contents)
+	  for k, v in pairs(self.contents) do
+		 message = message .. "  " .. k .. "\n"
+	  end
    else
 	  message = "You are not carrying anything."
    end
@@ -60,6 +62,7 @@ network_agent = agent:clone()
 player = network_agent:clone()
 programmer = player:clone()
 wizard = programmer:clone()
+wizard.description = "A shadowy figure of amazing and cromulent power."
 function network_agent:input(input)
    print("[Lua:network_agent.input]:::" .. input)
    local verb, direct, preposition, indirect = self:parse_command(input)
@@ -79,10 +82,10 @@ function network_agent:parse_command(input)
    -- put the yellow bird in the clock
    function is_preposition (word)
 	  local prepositions = {'named','with','using','at','to','in front of', 'in', 'inside',
-					  'into', 'on top of', 'on', 'onto', 'upon', 'out of',
-					  'from inside', 'from', 'over', 'through', 'under',
-					  'underneath', 'beneath', 'behind', 'beside', 'for',
-					  'about', 'is', 'as', 'off', 'off of'}
+							'into', 'on top of', 'on', 'onto', 'upon', 'out of',
+							'from inside', 'from', 'over', 'through', 'under',
+							'underneath', 'beneath', 'behind', 'beside', 'for',
+							'about', 'is', 'as', 'off', 'off of'}
 	  for i, w in ipairs(prepositions) do
 		 if word == w then
 			return w
@@ -122,4 +125,3 @@ first_room.description = "This is all there is here now."
 thing.location = nowhere
 thing.owner = wizard
 player.location = first_room
-
