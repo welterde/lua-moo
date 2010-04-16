@@ -26,9 +26,22 @@ void *handle_client(void *thread) {
 	struct thread_init *client = (struct thread_init *)thread;
 	lua_State *L = client->L;
 	int clientfd = client->clientfd;
+	int cmd_count = 0;
+	int websocket = 0;
+
 	while ((bytes = recv(clientfd, buffer, 1024, 0)) > 0) {
 		buffer[bytes - 2] = 0;
 		printf("[C:server]::%s\n", buffer);
+
+		if (cmd_count == 0) {
+			// Detect websocket clients
+			if (strncmp("GET /luamoo HTTP/1.1", buffer, 20) == 0) {
+				websocket = 1;
+				printf("[C:server]::WebSocket client detected\n");
+				cmd_count++;
+				continue;
+			}
+		}
 
 		// Pass the input off to Lua
 		lua_getglobal(L, "wizard");
@@ -49,6 +62,7 @@ void *handle_client(void *thread) {
 				printf("[C:error function `input` must return a string\n");
 			send(clientfd, result, strlen(result), 0);
 		}
+		cmd_count++;
 	}
 	printf("[C:Disconnect]\n");
 	close(clientfd);
