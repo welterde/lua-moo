@@ -99,7 +99,7 @@ end
 network_agent = agent:clone()
 player = network_agent:clone()
 programmer = player:clone()
-function programmer:show(target)
+function programmer:AT_show(target)
    function table_print (tt, indent, done)
 	  done = done or {}
 	  indent = indent or 0
@@ -109,7 +109,7 @@ function programmer:show(target)
 			table.insert(sb, string.rep (" ", indent)) -- indent it
 			if type (value) == "table" and not done [value] then
 			   done [value] = true
-			   table.insert(sb, "{\n");
+			   table.insert(sb, key .. " = {\n");
 			   table.insert(sb, table_print (value, indent + 2, done))
 			   table.insert(sb, string.rep (" ", indent)) -- indent it
 			   table.insert(sb, "}\n");
@@ -190,6 +190,7 @@ function network_agent:parse_command(input)
 	  input = input:gsub("^;", "eval ")
 	  input = input:gsub("^'", "say ")
 	  input = input:gsub("^:", "emote ")
+	  input = input:gsub("^@", "AT_")
 	  local split_input = input:split(" ")
 	  local verb = split_input[1]
 	  for i, word in ipairs(split_input) do
