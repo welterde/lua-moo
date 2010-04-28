@@ -47,8 +47,10 @@ function thing:look(target)
    else
 	  local message = self.location.description
 	  if next(self.location.contents) then 
-		 message = message .. "\nThere's "
-		 message = message .. table.concat(self.location.contents, ", ")
+		 message = message .. "\n\nThere is "
+		 for k,v in pairs(self.location.contents) do
+			message = message .. k .. ", "
+		 end
 		 message = message .. " here."
 	  end
 	  return message
