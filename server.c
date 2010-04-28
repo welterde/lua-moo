@@ -20,6 +20,8 @@ struct thread_init{
 	lua_State *L;	
 };
 
+#define WEBSOCKET_HANDSHAKE "HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nWebSocket-Origin: null\r\nWebSocket-Location: ws://localhost:7777/luamoo\r\n\r\n"
+
 void *handle_client(void *thread) {
 	char buffer[1024];
 	size_t bytes = 0;
@@ -30,7 +32,6 @@ void *handle_client(void *thread) {
 	int websocket = 0;
 
 	while ((bytes = recv(clientfd, buffer, 1024, 0)) > 0) {
-		buffer[bytes - 2] = 0;
 		printf("[C:server]::%s\n", buffer);
 
 		if (cmd_count == 0) {
@@ -38,17 +39,28 @@ void *handle_client(void *thread) {
 			if (strncmp("GET /luamoo HTTP/1.1", buffer, 20) == 0) {
 				websocket = 1;
 				printf("[C:server]::WebSocket client detected\n");
+				if (strstr(buffer, "\r\n\r\n") == 0) {
+					printf("[C:websocket]::%s\n", buffer);
+				}
+				send(clientfd, WEBSOCKET_HANDSHAKE, 
+					 strlen(WEBSOCKET_HANDSHAKE), 0);
 				cmd_count++;
 				continue;
 			}
 		}
 
+		if (!websocket && bytes >= 2) buffer[bytes - 2] = 0;
+
 		// Pass the input off to Lua
+		// Probably not safe at all with threading but who knows!
 		lua_getglobal(L, "wizard");
 		lua_pushstring(L, "input");
 		lua_gettable(L, -2);
 		lua_getglobal(L, "wizard"); // self
-		lua_pushlstring(L, buffer, bytes-2);
+		if (websocket)
+			lua_pushlstring(L, buffer+1, bytes-2);
+		else
+			lua_pushlstring(L, buffer, bytes-2);
 
 		// 2 arg, 1 result
 		if (lua_pcall(L, 2, 1, 0) != 0) {
@@ -60,7 +72,9 @@ void *handle_client(void *thread) {
 			const char *result = lua_tostring(L, -1);
 			if (!lua_isstring(L, -1))
 				printf("[C:error function `input` must return a string\n");
+			if (websocket) send(clientfd, "\0", 1, 0); // <
 			send(clientfd, result, strlen(result), 0);
+			if (websocket) send(clientfd, "\xFF", 1, 0); // >
 		}
 		cmd_count++;
 	}
