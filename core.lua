@@ -45,7 +45,13 @@ function thing:look(target)
    if target then
 	  return target.description
    else
-	  return self.location.description
+	  local message = self.location.description
+	  if next(self.location.contents) then 
+		 message = message .. "\nThere's "
+		 message = message .. table.concat(self.location.contents, ", ")
+		 message = message .. " here."
+	  end
+	  return message
    end
 end
 function agent:inventory()
@@ -59,9 +65,81 @@ function agent:inventory()
    end
    return message
 end
+function agent:get(target)
+   if target then
+	  if (target.location == self.location) then
+		 self.location.contents[target.name] = nil
+		 target.location = self
+		 self.contents[target.name] = target
+		 return "You picked up " .. target.name
+	  end
+	  if (target.location == self) then
+		 return "You're already holding that."
+	  end
+	  return "You're can't reach that."
+   else
+	  return "What did you want to get?"
+   end
+end
+function agent:drop(target)
+   if target then
+	  if (target.location == self) then
+		 self.location.contents[target.name] = target
+		 target.location = self.location
+		 self.contents[target.name] = nil
+		 return "Dropped " .. target.name
+	  end
+	  return "You don't have that in your inventory."
+   else
+	  return "What did you want to drop?"
+   end
+end
 network_agent = agent:clone()
 player = network_agent:clone()
 programmer = player:clone()
+function programmer:show(target)
+   function table_print (tt, indent, done)
+	  done = done or {}
+	  indent = indent or 0
+	  if type(tt) == "table" then
+		 local sb = {}
+		 for key, value in pairs (tt) do
+			table.insert(sb, string.rep (" ", indent)) -- indent it
+			if type (value) == "table" and not done [value] then
+			   done [value] = true
+			   table.insert(sb, "{\n");
+			   table.insert(sb, table_print (value, indent + 2, done))
+			   table.insert(sb, string.rep (" ", indent)) -- indent it
+			   table.insert(sb, "}\n");
+			elseif "number" == type(key) then
+			   table.insert(sb, string.format("\"%s\"\n", tostring(value)))
+			else
+			   table.insert(sb, string.format(
+							   "%s = \"%s\"\n", tostring (key), tostring(value)))
+			end
+		 end
+		 return table.concat(sb)
+	  else
+		 return tt .. "\n"
+	  end
+   end
+   
+   function to_string( tbl )
+	  if  "nil"       == type( tbl ) then
+		 return tostring(nil)
+	  elseif  "table" == type( tbl ) then
+		 return table_print(tbl)
+	  elseif  "string" == type( tbl ) then
+		 return tbl
+	  else
+		 return tostring(tbl)
+	  end
+   end
+
+   if target then
+	  return table_print(target)
+   end
+end
 wizard = programmer:clone()
 wizard.description = "A shadowy figure of amazing and cromulent power."
 function network_agent:input(input)
@@ -79,16 +157,17 @@ function network_agent:input(input)
 		 call = arg[verb]
 	  else
 		 arg = (self.location.contents[direct] or self.contents[direct])
-		 call = arg[verb]
+		 call = self[verb] or arg[verb]
 	  end
    else
 	  call = self[verb]
    end
-   local result, returned = pcall(call, self, arg)
+   local result, returned = xpcall(function () return call(self,arg) end, debug.traceback)
    if result then
+	  -- This might be an error
 	  return (returned or "Ok") .. "\n"
    else
-	  return returned .. "\n"
+	  return "Error: " .. returned .. "\n"
    end
 end
 function network_agent:parse_command(input)
@@ -142,4 +221,5 @@ player.location = first_room
 apple = thing:clone()
 apple.name = "Tasty Apple"
 apple.description = "A tasty apple."
+apple.location = wizard
 wizard.contents = {[apple.name]=apple}

@@ -20,7 +20,9 @@ struct thread_init{
 	lua_State *L;	
 };
 
-#define WEBSOCKET_HANDSHAKE "HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nWebSocket-Origin: null\r\nWebSocket-Location: ws://localhost:7777/luamoo\r\n\r\n"
+#define WEBSOCKET_HANDSHAKE "HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nWebSocket-Origin: http://192.168.1.2\r\nWebSocket-Location: ws://192.168.1.2:7777/luamoo\r\n\r\n"
+
+char *websocket_handshake() {}
 
 void *handle_client(void *thread) {
 	char buffer[1024];
