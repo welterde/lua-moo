@@ -45,7 +45,7 @@ function thing:look(target)
    if target then
 	  return target.description
    else
-	  local message = self.location.description
+	  local message = self.location.name .. "\n\n" .. self.location.description
 	  if next(self.location.contents) then 
 		 message = message .. "\n\nThere is "
 		 for k,v in pairs(self.location.contents) do
@@ -225,8 +225,10 @@ end
 
 room = container:clone()
 nowhere = room:clone()
+nowhere.name = "Nowhere"
 nowhere.description = "It's not much to look at."
 first_room = room:clone()
+first_room.name = "The First Room"
 first_room.description = "This is all there is here now."
 
 thing.location = nowhere
