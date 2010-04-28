@@ -159,7 +159,7 @@ function network_agent:input(input)
 		 call = arg[verb]
 	  else
 		 arg = (self.location.contents[direct] or self.contents[direct])
-		 call = self[verb] or arg[verb]
+		 call = self[verb] or arg[verb] or self.location[verb]
 	  end
    else
 	  call = self[verb]
