@@ -158,6 +158,12 @@ function network_agent:input(input)
    if preposition then print("Preposition:::"..preposition) end
    if indirect then print("Indirect:::"..indirect) end
    local arg, call
+   if indirect and not direct then
+	  -- The reasoning for this is 'look at <object>'
+	  direct = indirect
+	  indirect = nil
+	  print("Direct assumed to be Indirect")
+   end
    if direct then
 	  if direct == "self" or direct == "me" then
 		 arg = self
