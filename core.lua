@@ -14,6 +14,9 @@ end
 -- Strings
 dofile("string.lua")
 
+-- Utility objects
+utility = {}
+
 -- Slow :(
 function isa( clone_object, base_object )
    local clone_object_type = type(clone_object)
@@ -99,6 +102,17 @@ end
 network_agent = agent:clone()
 player = network_agent:clone()
 programmer = player:clone()
+function programmer:AT_create(parent, name)
+   if parent then
+	  local object = parent:clone()
+	  object.name = name
+	  object.location = self
+	  self.contents[name] = object
+	  return name .. " created."
+   else
+	  return "@create <parent> named <name>"
+   end
+end
 function programmer:AT_describe(target, description)
    if target and description then
 	  target.description = description
@@ -169,7 +183,7 @@ function network_agent:input(input)
 		 arg = self
 		 call = arg[verb]
 	  else
-		 arg = (self.location.contents[direct] or self.contents[direct])
+		 arg = (self.location.contents[direct] or self.contents[direct] or utility[direct])
 		 call = self[verb] or arg[verb] or self.location[verb]
 	  end
    else
@@ -240,3 +254,6 @@ apple.name = "Tasty Apple"
 apple.description = "A tasty apple."
 apple.location = wizard
 wizard.contents = {[apple.name]=apple}
+
+utility["$thing"] = thing
+utility["$room"] = room
