@@ -99,6 +99,11 @@ end
 network_agent = agent:clone()
 player = network_agent:clone()
 programmer = player:clone()
+function programmer:AT_describe(target, description)
+   if target and description then
+	  target.description = description
+   end
+end
 function programmer:AT_show(target)
    function table_print (tt, indent, done)
 	  done = done or {}
@@ -164,7 +169,8 @@ function network_agent:input(input)
    else
 	  call = self[verb]
    end
-   local result, returned = xpcall(function () return call(self,arg) end, debug.traceback)
+   local call_function = function () return call(self, arg, indirect) end 
+   local result, returned = xpcall(call_function, debug.traceback)
    if result then
 	  -- This might be an error
 	  return (returned or "Ok") .. "\n"
