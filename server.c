@@ -20,7 +20,7 @@ struct thread_init{
 	lua_State *L;	
 };
 
-#define WEBSOCKET_HANDSHAKE "HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nWebSocket-Origin: http://192.168.1.2\r\nWebSocket-Location: ws://192.168.1.2:7777/luamoo\r\n\r\n"
+#define WEBSOCKET_HANDSHAKE "HTTP/1.1 101 Web Socket Protocol Handshake\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\n"
 
 char *websocket_handshake() {}
 
@@ -32,10 +32,11 @@ void *handle_client(void *thread) {
 	int clientfd = client->clientfd;
 	int cmd_count = 0;
 	int websocket = 0;
+	char *origin,*host,*end;
 
 	while ((bytes = recv(clientfd, buffer, 1024, 0)) > 0) {
 		printf("[C:server]::%s\n", buffer);
-
+		
 		if (cmd_count == 0) {
 			// Detect websocket clients
 			if (strncmp("GET /luamoo HTTP/1.1", buffer, 20) == 0) {
@@ -45,7 +46,25 @@ void *handle_client(void *thread) {
 					printf("[C:websocket]::%s\n", buffer);
 				}
 				send(clientfd, WEBSOCKET_HANDSHAKE, 
-					 strlen(WEBSOCKET_HANDSHAKE), 0);
+				     strlen(WEBSOCKET_HANDSHAKE), 0);
+				// Send Websocket-Location
+				origin = strstr(buffer,"Origin:");                            //Find the client's "Origin"
+				if (origin) {
+					end = strstr(origin,"\r\n");                             //Find the endline
+					if (end) {
+						send(clientfd, "Websocket-", 10, 0);                 //Upgrade it to Websocket-Origin
+						send(clientfd, origin, (int)(end - origin) + 2, 0);  //Send it back
+					}
+				}
+				// Send Websocket-Location
+				host = strstr(buffer,"Host:");                           //Find the "Host"
+				if (host) {
+					end = strstr(host,"\r\n");                         //Find the endline
+					host += 6;                                           //Chop off "Host: "
+					send(clientfd, "Websocket-Location: ws://", 25, 0);  //Send Websocket-Location header with schema
+					send(clientfd, host, (int)(end - host), 0);          //add the hostname
+					send(clientfd, "/luamoo\r\n\r\n", 11, 0);            //add the location and terminate the response
+				}
 				cmd_count++;
 				continue;
 			}
